@@ -2,6 +2,7 @@ import cv2
 import os
 import matplotlib.pyplot as plt
 import pathlib
+import numpy
 
 def read_image(image_path):
     if os.path.exists(image_path):
