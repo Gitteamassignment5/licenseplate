@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 INPUT_WIDTH = 640
 INPUT_HEIGHT = 640
 
-# YOLOv5 모델 로드
-net = cv2.dnn.readNetFromONNX('..\\Automatic-Number-Plate-Recognition-with-YOLOV5\\weights\\best.onnx') 
+ #YOLOv5 모델 로드
+net = cv2.dnn.readNetFromONNX(r'C:\one\one\test\best.onnx') 
 net.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV)
 net.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)
 
@@ -142,9 +142,12 @@ def draw_number_plate(image, NumberPlateCnt):
     if NumberPlateCnt is not None:
         cv2.drawContours(image, [NumberPlateCnt], -1, (0, 255, 0), 3)
     return image
-
+def find_contours(dilated_img, roi):
+    contours, _ = cv2.findContours(dilated_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    cv2.drawContours(roi, contours, -1, (0, 255, 0), 3)
+    return roi, contours
 # 메인 실행 코드
-image_path = 'path_to_your_image.jpg'  # 이미지 경로 설정
+image_path = r'C:\one\one\img1\02_3170-4.jpg'  # 이미지 경로 설정
 boxes_np, nm_index, image, roi = detect_number_plate_yolo(image_path, net)
 
 if roi is not None:
@@ -189,6 +192,7 @@ if roi is not None:
         plt.figure(figsize=(10, 7))
         plt.imshow(ROI)
         plt.title('Detected Number Plate Region')
+        plt.savefig(r'C:\one\one\test\imgtest\detected_number_plate_region.png')  # 결과 저장
         plt.show()
 
     # 번호판 외곽선 그리기 및 시각화
@@ -196,4 +200,5 @@ if roi is not None:
     plt.figure(figsize=(10, 7))
     plt.imshow(cv2.cvtColor(final_img, cv2.COLOR_BGR2RGB))
     plt.title('Detected Number Plate')
+    plt.savefig(r'C:\one\one\test\imgtest\detected_number_plate.png')
     plt
