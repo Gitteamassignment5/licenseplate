@@ -1,3 +1,4 @@
+
 import cv2
 import os
 import imutils
@@ -8,7 +9,7 @@ INPUT_WIDTH = 640
 INPUT_HEIGHT = 640
 
  #YOLOv5 모델 로드
-net = cv2.dnn.readNetFromONNX(r'C:\one\one\test\best.onnx') 
+net = cv2.dnn.readNetFromONNX(r'C:/one/one/test/best.onnx') 
 net.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV)
 net.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)
 
@@ -147,7 +148,7 @@ def find_contours(dilated_img, roi):
     cv2.drawContours(roi, contours, -1, (0, 255, 0), 3)
     return roi, contours
 # 메인 실행 코드
-image_path = r'C:\one\one\img1\02_3170-4.jpg'  # 이미지 경로 설정
+image_path = r'C:/one/one/img1/02_3170-4.jpg'  # 이미지 경로 설정
 boxes_np, nm_index, image, roi = detect_number_plate_yolo(image_path, net)
 
 if roi is not None:
@@ -186,13 +187,13 @@ if roi is not None:
     plt.show()
 
     # 번호판 탐지
-    NumberPlateCnt, ROI = detect_number_plate(contours, img_rgb)
+    NumberPlateCnt, ROI = detect_number_plate_yolo(contours, img_rgb)
 
     if ROI is not None:
         plt.figure(figsize=(10, 7))
         plt.imshow(ROI)
         plt.title('Detected Number Plate Region')
-        plt.savefig(r'C:\one\one\test\imgtest\detected_number_plate_region.png')  # 결과 저장
+        plt.savefig(r'C:/one/one/test/imgtest/detected_number_plate_region.png')  # 결과 저장
         plt.show()
 
     # 번호판 외곽선 그리기 및 시각화
@@ -200,5 +201,5 @@ if roi is not None:
     plt.figure(figsize=(10, 7))
     plt.imshow(cv2.cvtColor(final_img, cv2.COLOR_BGR2RGB))
     plt.title('Detected Number Plate')
-    plt.savefig(r'C:\one\one\test\imgtest\detected_number_plate.png')
+    plt.savefig(r'C:/one/one/test/imgtest/detected_number_plate.png')
     plt
