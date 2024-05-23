@@ -61,18 +61,17 @@ def main():
     ocr_results = C.recognize_text("input_image_with_text.jpg")
     
     # TTS 모듈 사용 예시
-    ttsPath = "model/tts/glowtts/coqui_tts-December-08-2021_03+15PM-0000000"
-    subprocess.run([
-        "tts",
-        "--text", inputText,
-        "--model_path", f"{ttsPath}/checkpoint_190000.pth.tar",
-        "--config_path", f"{ttsPath}/config.json",
-        "--out_path", "output.wav"
-    ])
-
-    # 음성 파일 시각화 및 재생 (TTS 실행 후 사용)
-    displayWaveImage("output.wav")
-    ipd.display(ipd.Audio("output.wav"))
-
-if __name__ == "__main__":
+    #ttsPath = "model/tts/glowtts/coqui_tts-December-08-2021_03+15PM-0000000"
+    #subprocess.run([
+    #    "tts",
+    #    "--text", inputText,
+    #    "--model_path", f"{ttsPath}/checkpoint_190000.pth.tar",
+    #    "--config_path", f"{ttsPath}/config.json",
+    #    "--out_path", "output.wav"
+    #])
+#
+    ## 음성 파일 시각화 및 재생 (TTS 실행 후 사용)
+    #displayWaveImage("output.wav")
+    #ipd.display(ipd.Audio("output.wav"))
+#
     main()
