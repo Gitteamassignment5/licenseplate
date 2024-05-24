@@ -8,7 +8,7 @@ INPUT_WIDTH = 640
 INPUT_HEIGHT = 640
 
 # YOLOv5 모델 로드
-net = cv2.dnn.readNetFromONNX('C:/one/one/test/best.onnx') 
+net = cv2.dnn.readNetFromONNX('D:/license/test/best.onnx') 
 net.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV)
 net.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)
 
@@ -156,8 +156,8 @@ def ensure_dir(file_path):
         os.makedirs(directory)
 
 # 메인 실행 코드
-image_path = 'C:/one/one/img1/02_3170-4.jpg'  # 이미지 경로 설정
-save_dir = 'C:/one/one/test/imgtest/'
+image_path = 'D:/license/img1/023170-5.jpg'  # 이미지 경로 설정
+save_dir = 'D:/license/test/123'
 ensure_dir(save_dir)  # 저장 경로 디렉토리 확인 및 생성
 
 boxes_np, nm_index, image, rois = detect_number_plate_yolo(image_path, net)
