@@ -3,9 +3,14 @@ import os
 import imutils
 import numpy as np
 import matplotlib.pyplot as plt
+import pytesseract
+import pandas as pd
 
 INPUT_WIDTH = 640
 INPUT_HEIGHT = 640
+
+# Tesseract 경로 설정 (시스템에 맞게 수정)
+pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
 # YOLOv5 모델 로드
 net = cv2.dnn.readNetFromONNX('C:/one/one/test/best.onnx') 
@@ -154,9 +159,18 @@ def ensure_dir(file_path):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
+def ocr_and_save_to_csv(roi, csv_path):
+    text = pytesseract.image_to_string(roi, lang='kor')
+    data = {'Detected Text': [text]}
+    df = pd.DataFrame(data)
+    df.to_csv(csv_path, index=False)
+    print(f"Detected text saved to {csv_path}")
+
 # 메인 실행 코드
 image_path = 'C:/one/one/img1/02_3170-4.jpg'  # 이미지 경로 설정
 save_dir = 'C:/one/one/test/imgtest/'
+csv_path = os.path.join(save_dir, 'detected_text.csv')
+
 ensure_dir(save_dir)  # 저장 경로 디렉토리 확인 및 생성
 
 boxes_np, nm_index, image, roi = detect_number_plate_yolo(image_path, net)
@@ -164,7 +178,8 @@ boxes_np, nm_index, image, roi = detect_number_plate_yolo(image_path, net)
 if roi is not None:
     roi = imutils.resize(roi, width=500)
     img_rgb = cv2.cvtColor(roi, cv2.COLOR_BGR2RGB)
-        # 이미지 전처리 및 시각화
+
+    # 이미지 전처리 및 시각화
     gray = image_to_grayscale(roi)
 
     fig, ax = plt.subplots(2, 3, figsize=(15, 10))
@@ -195,17 +210,18 @@ if roi is not None:
     fig.tight_layout()
     plt.show()
 
-        # 번호판 탐지
+    # 번호판 탐지
     NumberPlateCnt = max(contours, key=cv2.contourArea)
 
-        
-
-        # 번호판 외곽선 그리기 및 시각화
+    # 번호판 외곽선 그리기 및 시각화
     final_img = draw_number_plate(roi, NumberPlateCnt)
     plt.figure(figsize=(10, 7))
     plt.imshow(cv2.cvtColor(final_img, cv2.COLOR_BGR2RGB))
     plt.title('Final Image with Number Plate Contours')
-    plt.savefig('C:/one/one/test/imgtest/detected_number_plate.png')
+    plt.savefig(os.path.join(save_dir, 'detected_number_plate.png'))
     plt.show()
+
+    # OCR 및 CSV 저장
+    ocr_and_save_to_csv(roi, csv_path)
 else:
     print('번호판을 감지할 수 없습니다.')
