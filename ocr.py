@@ -92,4 +92,14 @@ for m in range(0, 6):
             # 번호판 이미지 저장
             plate_img.save(f'plate_{m}_{idx}.jpg')
 
+            # 숫자와 글자 분리
+            numbers = ''.join(filter(str.isdigit, result))
+            letters = ''.join(filter(str.isalpha, result))
+            print(f"Numbers: {numbers}")
+            print(f"Letters: {letters}")
+
+            # 분리된 결과를 텍스트 파일에 저장
+            with open('car_number.txt', mode='a') as f:
+                f.write(f"Image {m} - Plate {idx} - Numbers: {numbers} Letters: {letters}\n")
+
     plt.show()
