@@ -1,15 +1,19 @@
-
 import cv2
 import os
 import imutils
 import numpy as np
 import matplotlib.pyplot as plt
+import pytesseract
+import pandas as pd
 
 INPUT_WIDTH = 640
 INPUT_HEIGHT = 640
 
- #YOLOv5 모델 로드
-net = cv2.dnn.readNetFromONNX(r'C:/one/one/test/best.onnx') 
+# Tesseract 경로 설정 (시스템에 맞게 수정)
+pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+
+# YOLOv5 모델 로드
+net = cv2.dnn.readNetFromONNX('C:/one/one/test/best.onnx') 
 net.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV)
 net.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)
 
@@ -25,6 +29,7 @@ def read_image(image_path):
             print(f'이미지를 읽는 중 오류가 발생했습니다: {image_path}')
     else:
         print(f'경로가 존재하지 않습니다: {image_path}')
+    return None
 
 def image_to_grayscale(img):
     return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -143,12 +148,31 @@ def draw_number_plate(image, NumberPlateCnt):
     if NumberPlateCnt is not None:
         cv2.drawContours(image, [NumberPlateCnt], -1, (0, 255, 0), 3)
     return image
+
 def find_contours(dilated_img, roi):
     contours, _ = cv2.findContours(dilated_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     cv2.drawContours(roi, contours, -1, (0, 255, 0), 3)
     return roi, contours
+
+def ensure_dir(file_path):
+    directory = os.path.dirname(file_path)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+def ocr_and_save_to_csv(roi, csv_path):
+    text = pytesseract.image_to_string(roi, lang='kor')
+    data = {'Detected Text': [text]}
+    df = pd.DataFrame(data)
+    df.to_csv(csv_path, index=False)
+    print(f"Detected text saved to {csv_path}")
+
 # 메인 실행 코드
-image_path = r'C:/one/one/img1/02_3170-4.jpg'  # 이미지 경로 설정
+image_path = 'C:/one/one/img1/02_3170-4.jpg'  # 이미지 경로 설정
+save_dir = 'C:/one/one/test/imgtest/'
+csv_path = os.path.join(save_dir, 'detected_text.csv')
+
+ensure_dir(save_dir)  # 저장 경로 디렉토리 확인 및 생성
+
 boxes_np, nm_index, image, roi = detect_number_plate_yolo(image_path, net)
 
 if roi is not None:
@@ -187,19 +211,17 @@ if roi is not None:
     plt.show()
 
     # 번호판 탐지
-    NumberPlateCnt, ROI = detect_number_plate_yolo(contours, img_rgb)
-
-    if ROI is not None:
-        plt.figure(figsize=(10, 7))
-        plt.imshow(ROI)
-        plt.title('Detected Number Plate Region')
-        plt.savefig(r'C:/one/one/test/imgtest/detected_number_plate_region.png')  # 결과 저장
-        plt.show()
+    NumberPlateCnt = max(contours, key=cv2.contourArea)
 
     # 번호판 외곽선 그리기 및 시각화
     final_img = draw_number_plate(roi, NumberPlateCnt)
     plt.figure(figsize=(10, 7))
     plt.imshow(cv2.cvtColor(final_img, cv2.COLOR_BGR2RGB))
-    plt.title('Detected Number Plate')
-    plt.savefig(r'C:/one/one/test/imgtest/detected_number_plate.png')
-    plt
+    plt.title('Final Image with Number Plate Contours')
+    plt.savefig(os.path.join(save_dir, 'detected_number_plate.png'))
+    plt.show()
+
+    # OCR 및 CSV 저장
+    ocr_and_save_to_csv(roi, csv_path)
+else:
+    print('번호판을 감지할 수 없습니다.')
