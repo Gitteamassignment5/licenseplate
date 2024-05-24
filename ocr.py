@@ -2,9 +2,13 @@ import cv2
 import numpy as np
 import pytesseract
 from PIL import Image
-import math
 import matplotlib.pyplot as plt
 import csv
+
+# YOLO 모델 설정
+net = cv2.dnn.readNet("yolov3.weights", "yolov3.cfg")
+layer_names = net.getLayerNames()
+output_layers = [layer_names[i[0] - 1] for i in net.getUnconnectedOutLayers()]
 
 # CSV 파일 열기
 with open('car_number.csv', mode='w', newline='') as csvfile:
@@ -13,93 +17,67 @@ with open('car_number.csv', mode='w', newline='') as csvfile:
     csvwriter.writerow(['Image', 'Plate', 'Result', 'Numbers', 'Letters'])
 
     for m in range(0, 6):
-        img = cv2.imread('car_%d.jpg' % m)
-        img_for_crop = Image.open("car_%d.jpg" % m)
-        height, width, channel = img.shape
+        img = cv2.imread(f'car_{m}.jpg')
+        height, width, channels = img.shape
 
-        # 1. Grayscale 변환
-        img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        # YOLO로 객체 검출
+        blob = cv2.dnn.blobFromImage(img, 0.00392, (416, 416), (0, 0, 0), True, crop=False)
+        net.setInput(blob)
+        outs = net.forward(output_layers)
 
-        # 2. Gaussian Blur 적용
-        img_blur = cv2.GaussianBlur(img_gray, ksize=(5, 5), sigmaX=0)
+        class_ids = []
+        confidences = []
+        boxes = []
+        for out in outs:
+            for detection in out:
+                scores = detection[5:]
+                class_id = np.argmax(scores)
+                confidence = scores[class_id]
+                if confidence > 0.5:
+                    center_x = int(detection[0] * width)
+                    center_y = int(detection[1] * height)
+                    w = int(detection[2] * width)
+                    h = int(detection[3] * height)
+                    x = int(center_x - w / 2)
+                    y = int(center_y - h / 2)
+                    boxes.append([x, y, w, h])
+                    confidences.append(float(confidence))
+                    class_ids.append(class_id)
 
-        # 3. Adaptive Thresholding
-        img_thresh = cv2.adaptiveThreshold(img_blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
+        indexes = cv2.dnn.NMSBoxes(boxes, confidences, 0.5, 0.4)
 
-        # 4. Contours 찾기
-        contours, _ = cv2.findContours(img_thresh, mode=cv2.RETR_EXTERNAL, method=cv2.CHAIN_APPROX_SIMPLE)
-
-        contours_dict = []
-        for contour in contours:
-            x, y, w, h = cv2.boundingRect(contour)
-            contours_dict.append({
-                'contour': contour,
-                'x': x,
-                'y': y,
-                'w': w,
-                'h': h,
-                'cx': x + (w / 2),
-                'cy': y + (h / 2)
-            })
-
-        # 5. 번호판으로 가능한 Contours 필터링
-        MIN_AREA = 80
-        MIN_WIDTH, MIN_HEIGHT = 2, 8
-        MIN_RATIO, MAX_RATIO = 0.25, 1.0
-
-        possible_contours = []
-        for d in contours_dict:
-            area = d['w'] * d['h']
-            ratio = d['w'] / d['h']
-
-            if area > MIN_AREA and d['w'] > MIN_WIDTH and d['h'] > MIN_HEIGHT and MIN_RATIO < ratio < MAX_RATIO:
-                possible_contours.append(d)
-
-        # 6. 번호판 후보 영역 찾기
-        def find_possible_plate(contours, width, height):
-            possible_plates = []
-            for c in contours:
-                for d in contours:
-                    if c is d:
-                        continue
-                    if abs(c['cx'] - d['cx']) < width and abs(c['cy'] - d['cy']) < height:
-                        possible_plates.append(c)
-                        possible_plates.append(d)
-            return possible_plates
-
-        plates = find_possible_plate(possible_contours, width//7, height//7)
-        if plates:
-            plates = sorted(plates, key=lambda x: x['x'])
-
-            # 7. 번호판 영역 crop
-            plate_imgs = []
-            for p in plates:
-                x, y, w, h = p['x'], p['y'], p['w'], p['h']
-                plate_img = img_for_crop.crop((x, y, x+w, y+h))
-                plate_imgs.append(plate_img)
-
-            # 8. 번호판 영역 OCR 수행
-            for idx, plate_img in enumerate(plate_imgs):
-                plate_img = plate_img.resize((plate_img.width * 2, plate_img.height * 2))
-                plate_img = plate_img.convert('L')
-                plate_img_np = np.array(plate_img)
+        # 번호판 검출 및 OCR 수행
+        for i in range(len(boxes)):
+            if i in indexes:
+                x, y, w, h = boxes[i]
+                plate_img = img[y:y+h, x:x+w]
+                plate_img_pil = Image.fromarray(cv2.cvtColor(plate_img, cv2.COLOR_BGR2RGB))
+                plate_img_pil = plate_img_pil.resize((plate_img_pil.width * 2, plate_img_pil.height * 2))
+                plate_img_pil = plate_img_pil.convert('L')
+                plate_img_np = np.array(plate_img_pil)
                 _, plate_img_thresh = cv2.threshold(plate_img_np, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-                plate_img = Image.fromarray(plate_img_thresh)
+                plate_img_pil = Image.fromarray(plate_img_thresh)
 
                 # OCR 수행
-                result = pytesseract.image_to_string(plate_img, lang="kor+eng", config='--psm 7')
+                result = pytesseract.image_to_string(plate_img_pil, lang="kor+eng", config='--psm 7')
                 result = result.strip()
-                print(f"Plate {m}-{idx}: {result}")
+                print(f"Plate {m}-{i}: {result}")
 
                 # 결과를 CSV 파일에 저장
                 numbers = ''.join(filter(str.isdigit, result))
                 letters = ''.join(filter(str.isalpha, result))
-                csvwriter.writerow([f"Image {m}", f"Plate {idx}", result, numbers, letters])
+                csvwriter.writerow([f"Image {m}", f"Plate {i}", result, numbers, letters])
 
                 # 번호판 이미지 저장
-                plate_img.save(f'plate_{m}_{idx}.jpg')
+                plate_img_pil.save(f'plate_{m}_{i}.jpg')
+
+                # 원본 이미지에 번호판 위치 사각형 그리기
+                cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
                 print(f"Numbers: {numbers}")
                 print(f"Letters: {letters}")
+
+            # 번호판 위치 표시된 원본 이미지 저장
+            cv2.imwrite(f'car_with_plate_{m}.jpg', img)
 
         plt.show()
