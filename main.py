@@ -1,4 +1,4 @@
-import korean
+import hgtk
 import librosa
 import librosa.display
 import matplotlib.pyplot as plt
@@ -8,13 +8,13 @@ import pandas as pd
 import datetime
 
 # 각 모듈 임포트 (실제 모듈 이름으로 대체해야 함)
-import A_preprocessing_module as A  # YOLO 전처리 모듈
+import image_opencv_postprocessing_v2 as A  # YOLO 전처리 모듈
 import B_yolo_model_module as B     # YOLO 모델 모듈
-import C_ocr_module as C            # OCR 모듈
-import D_tts_module as D            # TTS 모듈
+import ocr as C            # OCR 모듈
+import TTS as D            # TTS 모듈
 
 def koreanCleaner(text):
-    return "".join(korean.tokenize(text))
+    return hgtk.text.compose(hgtk.text.decompose(text))
 
 def displayWaveImage(path):
     x, sr = librosa.load(path)
@@ -37,41 +37,58 @@ def generate_message(car_number, day):
     # 메시지 생성
     return f"{car_number} 번호판 차량은 {day}요일에는 주차를 하시는 날이 아닙니다."
 
-def main():
-    file_path = "f.csv"
-    
-    # 새로운 항목 확인
-    new_entry = check_new_entries(file_path)
-    car_number = new_entry['차량번호']  # '차량번호' 열에 차량 번호가 있다고 가정
-    
-    # 현재 요일 가져오기
-    day = get_day()
-    
-    # 메시지 생성
-    input_text = generate_message(car_number, day)
-    inputText = koreanCleaner(input_text)
+def test_imports():
+    try:
+        # Korean 모듈 테스트
+        test_text = "안녕하세요"
+        cleaned_text = koreanCleaner(test_text)
+        print(f"Korean Cleaner Output: {cleaned_text}")
+        
+        # librosa와 matplotlib 테스트
+        test_audio_path = "test_audio.wav"  # 실제 경로로 대체
+        displayWaveImage(test_audio_path)
+        print("Librosa and Matplotlib: Wave image displayed.")
+        
+        # pandas 테스트
+        test_csv_path = "f.csv"  # 실제 경로로 대체
+        new_entry = check_new_entries(test_csv_path)
+        print(f"Pandas: New entry - {new_entry}")
+        
+        # datetime 테스트
+        current_day = get_day()
+        print(f"Datetime: Current day is {current_day}")
+        
+        # 커스텀 모듈 테스트
+        # YOLO 전처리 모듈 테스트
+        preprocessed_image = A.preprocess("input_image.jpg")
+        print(f"Preprocessing Module: Preprocessed image - {preprocessed_image}")
+        
+        # YOLO 모델 모듈 테스트
+        yolo_results = B.detect_objects(preprocessed_image)
+        print(f"YOLO Model Module: YOLO results - {yolo_results}")
+        
+        # OCR 모듈 테스트
+        ocr_results = C.recognize_text("input_image_with_text.jpg")
+        print(f"OCR Module: OCR results - {ocr_results}")
+        
+        # TTS 모듈 테스트
+        # 아래 주석을 해제하고 유효한 경로를 제공하여 TTS 테스트
+        # ttsPath = "model/tts/glowtts/coqui_tts-December-08-2021_03+15PM-0000000"
+        # subprocess.run([
+        #     "tts",
+        #     "--text", cleaned_text,
+        #     "--model_path", f"{ttsPath}/checkpoint_190000.pth.tar",
+        #     "--config_path", f"{ttsPath}/config.json",
+        #     "--out_path", "output.wav"
+        # ])
+        # displayWaveImage("output.wav")
+        # ipd.display(ipd.Audio("output.wav"))
+        # print("TTS Module: TTS output generated and displayed.")
+        
+        print("모든 임포트와 함수 호출이 성공적으로 완료되었습니다.")
+        
+    except Exception as e:
+        print(f"오류가 발생했습니다: {e}")
 
-    # YOLO 전처리 모듈 사용 예시
-    preprocessed_image = A.preprocess("input_image.jpg")
-    
-    # YOLO 모델 모듈 사용 예시
-    yolo_results = B.detect_objects(preprocessed_image)
-    
-    # OCR 모듈 사용 예시
-    ocr_results = C.recognize_text("input_image_with_text.jpg")
-    
-    # TTS 모듈 사용 예시
-    #ttsPath = "model/tts/glowtts/coqui_tts-December-08-2021_03+15PM-0000000"
-    #subprocess.run([
-    #    "tts",
-    #    "--text", inputText,
-    #    "--model_path", f"{ttsPath}/checkpoint_190000.pth.tar",
-    #    "--config_path", f"{ttsPath}/config.json",
-    #    "--out_path", "output.wav"
-    #])
-#
-    ## 음성 파일 시각화 및 재생 (TTS 실행 후 사용)
-    #displayWaveImage("output.wav")
-    #ipd.display(ipd.Audio("output.wav"))
-#
-    main()
+# 테스트 함수 실행
+test_imports()
