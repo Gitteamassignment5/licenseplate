@@ -1,4 +1,3 @@
-
 import cv2
 import os
 import imutils
@@ -8,8 +7,8 @@ import matplotlib.pyplot as plt
 INPUT_WIDTH = 640
 INPUT_HEIGHT = 640
 
- #YOLOv5 모델 로드
-net = cv2.dnn.readNetFromONNX(r'C:/one/one/test/best.onnx') 
+# YOLOv5 모델 로드
+net = cv2.dnn.readNetFromONNX('C:/one/one/test/best.onnx') 
 net.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV)
 net.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)
 
@@ -25,6 +24,7 @@ def read_image(image_path):
             print(f'이미지를 읽는 중 오류가 발생했습니다: {image_path}')
     else:
         print(f'경로가 존재하지 않습니다: {image_path}')
+    return None
 
 def image_to_grayscale(img):
     return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -97,21 +97,22 @@ def yolo_predictions(img, net):
     return boxes_np, index
 
 def croptheROI(image, bbox, index):
-    cropped = None
-    for i in index:
-        x, y, w, h = bbox[i]
-        cropped = image[y:y+h, x:x+w]
-    return cropped
+    rois = []
+    if len(index) > 0:
+        for i in index.flatten():
+            x, y, w, h = bbox[i]
+            rois.append(image[y:y+h, x:x+w])
+    return rois
 
 def detect_number_plate_yolo(image_path, net):
     img = read_image(image_path)
     if img is None:
-        return None, None
+        return None, None, None, None
 
     boxes_np, nm_index = yolo_predictions(img, net)
-    roi = croptheROI(img, boxes_np, nm_index)
+    rois = croptheROI(img, boxes_np, nm_index)
 
-    return boxes_np, nm_index, img, roi
+    return boxes_np, nm_index, img, rois
 
 def preprocessing(crop):
     gray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
@@ -143,63 +144,74 @@ def draw_number_plate(image, NumberPlateCnt):
     if NumberPlateCnt is not None:
         cv2.drawContours(image, [NumberPlateCnt], -1, (0, 255, 0), 3)
     return image
+
 def find_contours(dilated_img, roi):
     contours, _ = cv2.findContours(dilated_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     cv2.drawContours(roi, contours, -1, (0, 255, 0), 3)
     return roi, contours
+
+def ensure_dir(file_path):
+    directory = os.path.dirname(file_path)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
 # 메인 실행 코드
-image_path = r'C:/one/one/img1/02_3170-4.jpg'  # 이미지 경로 설정
-boxes_np, nm_index, image, roi = detect_number_plate_yolo(image_path, net)
+image_path = 'C:/one/one/img1/02_3170-4.jpg'  # 이미지 경로 설정
+save_dir = 'C:/one/one/test/imgtest/'
+ensure_dir(save_dir)  # 저장 경로 디렉토리 확인 및 생성
 
-if roi is not None:
-    roi = imutils.resize(roi, width=500)
-    img_rgb = cv2.cvtColor(roi, cv2.COLOR_BGR2RGB)
+boxes_np, nm_index, image, rois = detect_number_plate_yolo(image_path, net)
 
-    # 이미지 전처리 및 시각화
-    gray = image_to_grayscale(roi)
+if rois:
+    for idx, roi in enumerate(rois):
+        roi = imutils.resize(roi, width=500)
+        img_rgb = cv2.cvtColor(roi, cv2.COLOR_BGR2RGB)
 
-    fig, ax = plt.subplots(2, 3, figsize=(15, 10))
-    ax[0, 0].imshow(cv2.cvtColor(roi, cv2.COLOR_BGR2RGB))
-    ax[0, 0].set_title('Original Image')
+        # 이미지 전처리 및 시각화
+        gray = image_to_grayscale(roi)
 
-    ax[0, 1].imshow(gray, cmap='gray')
-    ax[0, 1].set_title('Grayscale Conversion')
+        fig, ax = plt.subplots(2, 3, figsize=(15, 10))
+        ax[0, 0].imshow(cv2.cvtColor(roi, cv2.COLOR_BGR2RGB))
+        ax[0, 0].set_title('Original Image')
 
-    filtered = bilateral_filter(gray)
-    ax[0, 2].imshow(filtered, cmap='gray')
-    ax[0, 2].set_title('Bilateral Filter')
+        ax[0, 1].imshow(gray, cmap='gray')
+        ax[0, 1].set_title('Grayscale Conversion')
 
-    edged = canny_edge_detection(filtered)
-    ax[1, 0].imshow(edged, cmap='gray')
-    ax[1, 0].set_title('Canny Edges')
+        filtered = bilateral_filter(gray)
+        ax[0, 2].imshow(filtered, cmap='gray')
+        ax[0, 2].set_title('Bilateral Filter')
 
-    inverted = invert_color(edged)
-    binary = binarize_img(inverted)
-    dilated = dilate_image(binary)
-    ax[1, 1].imshow(dilated, cmap='gray')
-    ax[1, 1].set_title('Dilated Image')
+        edged = canny_edge_detection(filtered)
+        ax[1, 0].imshow(edged, cmap='gray')
+        ax[1, 0].set_title('Canny Edges')
 
-    processed_img, contours = find_contours(dilated, roi.copy())
-    ax[1, 2].imshow(cv2.cvtColor(processed_img, cv2.COLOR_BGR2RGB))
-    ax[1, 2].set_title('Contours on Image')
+        inverted = invert_color(edged)
+        binary = binarize_img(inverted)
+        dilated = dilate_image(binary)
+        ax[1, 1].imshow(dilated, cmap='gray')
+        ax[1, 1].set_title('Dilated Image')
 
-    fig.tight_layout()
-    plt.show()
+        processed_img, contours = find_contours(dilated, roi.copy())
+        ax[1, 2].imshow(cv2.cvtColor(processed_img, cv2.COLOR_BGR2RGB))
+        ax[1, 2].set_title('Contours on Image')
 
-    # 번호판 탐지
-    NumberPlateCnt, ROI = detect_number_plate_yolo(contours, img_rgb)
-
-    if ROI is not None:
-        plt.figure(figsize=(10, 7))
-        plt.imshow(ROI)
-        plt.title('Detected Number Plate Region')
-        plt.savefig(r'C:/one/one/test/imgtest/detected_number_plate_region.png')  # 결과 저장
+        fig.tight_layout()
         plt.show()
 
-    # 번호판 외곽선 그리기 및 시각화
-    final_img = draw_number_plate(roi, NumberPlateCnt)
-    plt.figure(figsize=(10, 7))
-    plt.imshow(cv2.cvtColor(final_img, cv2.COLOR_BGR2RGB))
-    plt.title('Detected Number Plate')
-    plt.savefig(r'C:/one/one/test/imgtest/detected_number_plate.png')
-    plt
+        # 번호판 탐지
+        cropped_image = preprocessing(roi)
+
+        if cropped_image is not None:
+            plt.figure(figsize=(10, 7))
+            plt.imshow(cropped_image, cmap='gray')
+            plt.title('Detected Number Plate Region')
+            plt.savefig(f'{save_dir}/detected_number_plate_region_{idx}.png')  # 결과 저장
+            plt.show()
+
+        # 번호판 외곽선 그리기 및 시각화
+        final_img = draw_number_plate(roi, contours)
+        plt.figure(figsize=(10, 7))
+        plt.imshow(cv2.cvtColor(final_img, cv2.COLOR_BGR2RGB))
+        plt.title('Final Image with Number Plate Contours')
+        plt.savefig(f'{save_dir}/final_image_with_number_plate_contours_{idx}.png')
+        plt.show()
