@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import pytesseract
 import os
+import csv
 
 # Tesseract 경로 설정 (Windows에서만 필요)
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
@@ -10,13 +11,19 @@ pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tessera
 os.environ['TESSDATA_PREFIX'] = r'C:\Program Files\Tesseract-OCR\tessdata'
 
 # 이미지 경로 및 결과 저장 경로 설정
-input_image_path = r'D:\license\test\imgtest'  # 입력 이미지가 저장된 경로
+input_image_path = r'D:\license\img1'  # 입력 이미지가 저장된 경로
 save_image_path = 'D:/license/results/images'  # 중간 결과 이미지를 저장할 경로
 save_text_path = 'D:/license/results/text'  # 인식된 텍스트를 저장할 경로
 
 # 저장 경로가 존재하지 않으면 생성
 os.makedirs(save_image_path, exist_ok=True)
 os.makedirs(save_text_path, exist_ok=True)
+
+# CSV 파일 생성 및 헤더 작성
+csv_file_path = os.path.join(save_text_path, 'recognized_text.csv')
+with open(csv_file_path, mode='w', newline='', encoding='utf-8') as csvfile:
+    csv_writer = csv.writer(csvfile)
+    csv_writer.writerow(['Image Number', 'Recognized Text'])
 
 # 이미지 불러오기 및 처리
 for images in range(1, 21):
@@ -242,8 +249,9 @@ for images in range(1, 21):
         text = pytesseract.image_to_string(img_cropped, lang='kor', config=r'--psm 6 --oem 3')
         print(images, text, end='')
 
-        # 인식된 텍스트 저장
-        with open(os.path.join(save_text_path, 'recognized_text.txt'), 'a', encoding='utf-8') as f:
-            f.write(f'{images}: {text}\n')
+        # 인식된 텍스트를 CSV 파일에 저장
+        with open(csv_file_path, mode='a', newline='', encoding='utf-8') as csvfile:
+            csv_writer = csv.writer(csvfile)
+            csv_writer.writerow([images, text])
     else:
         print(f"번호판을 찾을 수 없습니다: {img_path}")
