@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 46
+names: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'beo', 'bo', 'bu', 'da', 'deo', 'do', 'du', 'eo', 'ga', 'geo', 'go', 'gu', 'ha', 'heo', 'ho', 'jeo', 'jo', 'ju', 'la', 'leo', 'license_plate', 'lo', 'lu', 'ma', 'meo', 'mo', 'mu', 'na', 'neo', 'no', 'nu', 'o', 'seo', 'so', 'su', 'u']
+
+roboflow:
+  workspace: licenseplate-nrge5
+  project: real-nnbha
+  version: 1
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/licenseplate-nrge5/real-nnbha/dataset/1
