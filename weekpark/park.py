@@ -41,6 +41,22 @@ def extract_license_plate_number(image_path):
     number = ''.join(filter(str.isdigit, text))
     return number
 
+def classify_vehicle(car_number):
+    # 차량 번호 앞 두 자리 추출
+    front_number = int(car_number[:2])
+    
+    # 차량 유형 분류
+    if 1 <= front_number <= 69:
+        return "승용차"
+    elif 70 <= front_number <= 79:
+        return "승합차"
+    elif 80 <= front_number <= 97:
+        return "화물차"
+    elif front_number in [98, 99]:
+        return "특수차"
+    else:
+        return "알 수 없음"
+
 def can_enter_public_office(car_number):
     # 차량 번호 마지막 숫자 추출
     last_digit = int(car_number[-1])
@@ -60,9 +76,11 @@ def main(image_paths, csv_output_path):
     results = []
     for image_path in image_paths:
         car_number = extract_license_plate_number(image_path)
+        vehicle_type = classify_vehicle(car_number)
         result = can_enter_public_office(car_number)
         results.append({
             "차량 번호": car_number,
+            "차량 유형": vehicle_type,
             "출입 가능 여부": result,
             "날짜": datetime.datetime.today().strftime('%Y-%m-%d')
         })
@@ -75,8 +93,8 @@ def main(image_paths, csv_output_path):
     print(f"결과가 {csv_output_path}에 저장되었습니다.")
 
 # 이미지 파일 경로 및 결과 CSV 파일 경로 설정
-image_paths = [r"D:\weekpark\results\image\plate1.png"]  # 업로드된 이미지 파일 경로
-csv_output_path = r"D:\weekpark\results\parkresults\parkresults.csv"  # 결과 CSV 파일 경로 설정
+image_paths = [r"D:\license\weekpark\results\image\plate9.png"]  # 업로드된 이미지 파일 경로
+csv_output_path = r"D:\license\weekpark\results\parkresults\parkresults.csv"  # 결과 CSV 파일 경로 설정
 
 print(f"이미지 파일 경로: {image_paths}")
 print(f"CSV 파일 경로: {csv_output_path}")
