@@ -7,7 +7,7 @@ INPUT_WIDTH = 640
 INPUT_HEIGHT = 640
 
 # YOLOv5 모델 로드
-net = cv2.dnn.readNetFromONNX(r'D:\license\test\best.onnx') 
+net = cv2.dnn.readNetFromONNX(r'D:\license\test\car_number.onnx') 
 net.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV)
 net.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)
 

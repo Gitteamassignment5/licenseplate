@@ -93,7 +93,7 @@ def main(image_paths, csv_output_path):
     print(f"결과가 {csv_output_path}에 저장되었습니다.")
 
 # 이미지 파일 경로 및 결과 CSV 파일 경로 설정
-image_paths = [r"D:\license\weekpark\results\image\plate9.png"]  # 업로드된 이미지 파일 경로
+image_paths = [r"D:\license\weekpark\results\image\plate10.png"]  # 업로드된 이미지 파일 경로
 csv_output_path = r"D:\license\weekpark\results\parkresults\parkresults.csv"  # 결과 CSV 파일 경로 설정
 
 print(f"이미지 파일 경로: {image_paths}")

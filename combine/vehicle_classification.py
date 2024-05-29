@@ -1,10 +1,9 @@
-# vehicle_classification.py
 import cv2
 import pytesseract
 import datetime
 import pandas as pd
 import os
-import imultils
+import imutils
 from ocr_processing import preprocessing  # ocr_processing에서 preprocessing 함수 import
 from image_opencv_postprocessing_v2 import detect_number_plate_yolo, net
 
@@ -114,8 +113,8 @@ def main(image_paths, csv_output_path):
 
 if __name__ == "__main__":
     # 이미지 파일 경로 및 결과 CSV 파일 경로 설정
-    image_paths = [r"D:\plate\img1\1.jpg"]  # 업로드된 이미지 파일 경로
-    csv_output_path = r"D:\plate\results\text"  # 결과 CSV 파일 경로 설정
+    image_paths = [r"D:\license\img1\1.jpg"]  # 업로드된 이미지 파일 경로
+    csv_output_path = r"D:\license\results\text\results.csv"  # 결과 CSV 파일 경로 설정
 
     print(f"이미지 파일 경로: {image_paths}")
     print(f"CSV 파일 경로: {csv_output_path}")

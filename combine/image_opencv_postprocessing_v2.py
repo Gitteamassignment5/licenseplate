@@ -6,9 +6,8 @@ import numpy as np
 INPUT_WIDTH = 640
 INPUT_HEIGHT = 640
 
-# YOLOv5 모델 로드
-net = cv2.dnn.readNetFromONNX(r'D:\license\test\car_number.onnx') 
-net = cv2.dnn.readNetFromONNX(r'D:\license\test\fireplug.onnx') 
+# YOLOv5 모델 로드 (하나의 모델만 사용하도록 수정)
+net = cv2.dnn.readNetFromONNX(r'D:\license\test\best.onnx')
 net.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV)
 net.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)
 
@@ -35,10 +34,14 @@ def get_detections(img, net):
     input_image = np.zeros((max_rc, max_rc, 3), dtype=np.uint8)
     input_image[0:row, 0:col] = image
 
-    blob = cv2.dnn.blobFromImage(input_image, 1/255, (INPUT_WIDTH, INPUT_HEIGHT), swapRB=True, crop=False)
+    blob = cv2.dnn.blobFromImage(input_image, 1/255.0, (INPUT_WIDTH, INPUT_HEIGHT), swapRB=True, crop=False)
     net.setInput(blob)
     preds = net.forward()
     detections = preds[0]
+
+    # 디버깅: 입력 데이터와 예측 결과 형태 출력
+    print("입력 데이터 형태:", input_image.shape)
+    print("예측 결과 형태:", detections.shape)
     
     return input_image, detections
 
