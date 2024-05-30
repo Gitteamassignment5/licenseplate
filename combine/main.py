@@ -52,7 +52,7 @@ def test_imports():
         print("Librosa and Matplotlib: Wave image displayed.")
         
         # pandas 테스트
-        test_csv_path = "D:/weekpark_test/f.csv"  # 절대 경로로 변경
+        test_csv_path = "D:/license/result/result.csv"  # 절대 경로로 변경
         new_entry = check_new_entries(test_csv_path)
         print(f"Pandas: New entry - {new_entry}")
         
@@ -62,7 +62,7 @@ def test_imports():
         
         # 커스텀 모듈 테스트
         # YOLO 전처리 모듈 테스트
-        preprocessed_image = A.preprocess("D:/weekpark_test/input_image.jpg")  # 절대 경로로 변경
+        preprocessed_image = A.preprocess("D:/license/img1")  # 절대 경로로 변경
         print(f"Preprocessing Module: Preprocessed image - {preprocessed_image}")
         
         # YOLO 모델 모듈 테스트
@@ -70,7 +70,7 @@ def test_imports():
         # print(f"YOLO Model Module: YOLO results - {yolo_results}")
         
         # OCR 모듈 테스트
-        ocr_results = C.preprocessing("D:/weekpark_test/input_image_with_text.jpg")  # 절대 경로로 변경
+        ocr_results = C.preprocessing("D:license/img1")  # 절대 경로로 변경
         print(f"OCR Module: OCR results - {ocr_results}")
         
         # TTS 모듈 테스트
