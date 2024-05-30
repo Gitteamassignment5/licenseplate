@@ -94,29 +94,19 @@ def main(image_paths, csv_output_path):
                 "차량 번호": car_number,
                 "차량 유형": vehicle_type,
                 "출입 가능 여부": result,
-                "날짜": datetime.datetime.today().strftime('%Y-%m-%d')
+                "날짜": datetime.datetime.today().strftime('%Y-%m-%d')  # 날짜 형식 지정
             })
         else:
             results.append({
                 "차량 번호": "인식 실패",
                 "차량 유형": "알 수 없음",
                 "출입 가능 여부": "알 수 없음",
-                "날짜": datetime.datetime.today().strftime('%Y-%m-%d')
+                "날짜": datetime.datetime.today().strftime('%Y-%m-%d')  # 날짜 형식 지정
             })
     
     # 결과 디렉토리가 존재하지 않으면 생성
     os.makedirs(os.path.dirname(csv_output_path), exist_ok=True)
     
     df = pd.DataFrame(results)
-    df.to_csv(csv_output_path, index=False)
+    df.to_csv(csv_output_path, index=False, encoding='utf-8-sig')  # UTF-8 BOM 인코딩 사용
     print(f"결과가 {csv_output_path}에 저장되었습니다.")
-
-if __name__ == "__main__":
-    # 이미지 파일 경로 및 결과 CSV 파일 경로 설정
-    image_paths = [r"D:\license\img1\1.jpg"]  # 업로드된 이미지 파일 경로
-    csv_output_path = r"D:\license\results\text\results.csv"  # 결과 CSV 파일 경로 설정
-
-    print(f"이미지 파일 경로: {image_paths}")
-    print(f"CSV 파일 경로: {csv_output_path}")
-
-    main(image_paths, csv_output_path)
