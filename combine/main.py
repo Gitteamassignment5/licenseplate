@@ -94,7 +94,7 @@ def test_imports():
 
 if __name__ == "__main__":
     # vehicle_classification_main 함수 실행
-    image_paths = [r"D:\license\img1\2.jpg"]  # 업로드된 이미지 파일 경로
+    image_paths = [r"D:\license\img1\1.jpg"]  # 업로드된 이미지 파일 경로
     csv_output_path = r"D:\license\results\text\results.csv"  # 결과 CSV 파일 경로 설정
 
     print(f"이미지 파일 경로: {image_paths}")
