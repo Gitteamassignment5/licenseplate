@@ -52,7 +52,7 @@ def test_imports():
         print("Librosa and Matplotlib: Wave image displayed.")
         
         # pandas 테스트
-        test_csv_path = "D:/license/result/result.csv"  # 절대 경로로 변경
+        test_csv_path = r"D:\license\results\text\results.csv"  # 절대 경로로 변경
         new_entry = check_new_entries(test_csv_path)
         print(f"Pandas: New entry - {new_entry}")
         
@@ -62,16 +62,16 @@ def test_imports():
         
         # 커스텀 모듈 테스트
         # YOLO 전처리 모듈 테스트
-        preprocessed_image = A.preprocess("D:/license/img1")  # 절대 경로로 변경
-        print(f"Preprocessing Module: Preprocessed image - {preprocessed_image}")
+        # preprocessed_image = A.preprocess("D:/license/img1")  # 절대 경로로 변경
+        # print(f"Preprocessing Module: Preprocessed image - {preprocessed_image}")
         
         # YOLO 모델 모듈 테스트
         # yolo_results = B.detect_objects(preprocessed_image)
         # print(f"YOLO Model Module: YOLO results - {yolo_results}")
         
         # OCR 모듈 테스트
-        ocr_results = C.preprocessing("D:license/img1")  # 절대 경로로 변경
-        print(f"OCR Module: OCR results - {ocr_results}")
+        # ocr_results = C.preprocessing("D:license/img1")  # 절대 경로로 변경
+        # print(f"OCR Module: OCR results - {ocr_results}")
         
         # TTS 모듈 테스트
         # 아래 주석을 해제하고 유효한 경로를 제공하여 TTS 테스트
@@ -101,6 +101,3 @@ if __name__ == "__main__":
     print(f"CSV 파일 경로: {csv_output_path}")
 
     VC.main(image_paths, csv_output_path)
-
-    # 테스트 함수 실행
-    test_imports()

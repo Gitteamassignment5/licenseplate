@@ -91,7 +91,7 @@ def croptheROI(image, bbox, index):
             rois.append(image[y:y+h, x:x+w])
     return rois
 
-def detect_number_plate_yolo(image_path, net):
+def detect_number_plate_yolo(image_path):
     """이미지에서 번호판을 감지하고 ROI를 추출하는 함수"""
     img = read_image(image_path)
     if img is None:
@@ -101,3 +101,8 @@ def detect_number_plate_yolo(image_path, net):
     rois = croptheROI(img, boxes_np, nm_index)
 
     return boxes_np, nm_index, img, rois
+
+def extract_and_recognize_text(image_path):
+    """텍스트를 추출하고 인식하는 메인 함수"""
+    boxes_np, nm_index, img, rois = detect_number_plate_yolo(image_path)
+    # 텍스트 인식을 위한 추가 코드 구현

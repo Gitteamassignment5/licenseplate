@@ -1,10 +1,7 @@
-# ocr_processing.py
 import cv2
 import numpy as np
 import pytesseract
 import os
-import csv
-import imutils
 import matplotlib.pyplot as plt
 from image_opencv_postprocessing_v2 import detect_number_plate_yolo, net
 
@@ -38,10 +35,65 @@ def preprocessing(crop):
     edges = cv2.Canny(morph, 100, 200)
     morph = cv2.bitwise_or(morph, edges)
 
-    # 전처리된 이미지 시각화
-    plt.figure(figsize=(10, 5))
-    plt.imshow(morph, cmap='gray')
-    plt.title('Preprocessed Image')
-    plt.show()
-    
     return morph
+
+def extract_and_recognize_text(image_path):
+    # 이미지 읽기
+    img = cv2.imread(image_path)
+    if img is None:
+        print("Error: Image not found or unable to load.")
+        return
+    
+    # YOLO를 사용하여 번호판 탐지
+    plates_info = detect_number_plate_yolo(image_path)
+    
+    if plates_info is None or plates_info[0] is None:
+        print("No plates detected.")
+        return
+    
+    boxes_np, nm_index, img, rois = plates_info
+
+    plate_infos = []
+    plate_chars = []
+
+    for i, (x, y, w, h) in enumerate(boxes_np):
+        plate_img = img[y:y+h, x:x+w]
+        preprocessed_img = preprocessing(plate_img)
+
+        # Tesseract를 사용하여 문자 인식
+        chars = pytesseract.image_to_string(preprocessed_img, lang='kor', config='--psm 7 --oem 0')
+        result_chars = ''
+        has_digit = False
+
+        for c in chars:
+            if ord('가') <= ord(c) <= ord('힣') or c.isdigit():
+                if c.isdigit():
+                    has_digit = True
+                result_chars += c
+
+        if has_digit and len(result_chars) > 0:
+            plate_infos.append({'x': x, 'y': y, 'w': w, 'h': h, 'chars': result_chars})
+            plate_chars.append(result_chars)
+
+            # 결과 이미지 시각화
+            cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            cv2.putText(img, result_chars, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
+
+    if plate_infos:
+        plt.figure(figsize=(10, 10))
+        plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+        plt.title('Detected License Plates')
+        plt.show()
+        
+        # 인식된 번호판 문자 출력
+        for info in plate_infos:
+            print(f"Detected Plate: {info['chars']} at (x: {info['x']}, y: {info['y']}, w: {info['w']}, h: {info['h']})")
+    else:
+        print("No valid license plate characters detected.")
+
+    # 마지막 배열값 가져오기
+    if plate_chars:
+        return plate_chars[-1]
+    else:
+        return None
+

@@ -4,8 +4,8 @@ import datetime
 import pandas as pd
 import os
 import imutils
-from ocr_processing import preprocessing  # ocr_processing에서 preprocessing 함수 import
-from image_opencv_postprocessing_v2 import detect_number_plate_yolo, net
+from ocr_processing import preprocessing, extract_and_recognize_text  # ocr_processing에서 preprocessing 및 새로운 함수 import
+from image_opencv_postprocessing_v2 import detect_number_plate_yolo  # net 제거
 
 # Tesseract OCR 경로 설정 (예: Windows의 경우)
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
@@ -19,7 +19,7 @@ restriction_map = {
     4: [5, 0],  # 금요일
 }
 
-def extract_license_plate_number(image_path):
+def extract_license_plate_last_char(image_path):
     # 이미지 파일 경로 확인
     if not os.path.isfile(image_path):
         raise FileNotFoundError(f"파일을 찾을 수 없습니다: {image_path}")
@@ -31,30 +31,19 @@ def extract_license_plate_number(image_path):
     
     print(f"이미지 읽기 성공: {image_path}")
     
-    # 번호판 영역 추출 (OCR 모듈의 함수 사용)
-    boxes_np, nm_index, image, rois = detect_number_plate_yolo(image_path, net)
+    # 번호판 영역 및 문자를 추출하는 외부 모듈 함수 사용
+    plate_chars = extract_and_recognize_text(image_path)
+    return plate_chars
+
+def classify_vehicle(plate_chars):
+    # 숫자와 문자 분리
+    digits = ''.join(filter(str.isdigit, plate_chars))
     
-    if rois:
-        for idx, roi in enumerate(rois):
-            roi = imutils.resize(roi, width=500)
-            cropped_image = preprocessing(roi)
-
-            if cropped_image is not None:
-                # OCR로 텍스트 추출
-                custom_config = r'--psm 6 --oem 3'
-                text = pytesseract.image_to_string(cropped_image, lang='kor', config=custom_config)
-                print(f"OCR 결과: {text}")
-                
-                # 숫자만 추출
-                number = ''.join(filter(str.isdigit, text))
-                return number
-    else:
-        print(f"번호판을 찾을 수 없습니다: {image_path}")
-        return None
-
-def classify_vehicle(car_number):
+    if len(digits) < 2:
+        return "알 수 없음"
+    
     # 차량 번호 앞 두 자리 추출
-    front_number = int(car_number[:2])
+    front_number = int(digits[:2])
     
     # 차량 유형 분류
     if 1 <= front_number <= 69:
@@ -68,9 +57,15 @@ def classify_vehicle(car_number):
     else:
         return "알 수 없음"
 
-def can_enter_public_office(car_number):
+def can_enter_public_office(plate_chars):
+    # 숫자와 문자 분리
+    digits = ''.join(filter(str.isdigit, plate_chars))
+    
+    if not digits:
+        return "출입 가능 (숫자 아님)"
+    
     # 차량 번호 마지막 숫자 추출
-    last_digit = int(car_number[-1])
+    last_digit = int(digits[-1])
     
     # 오늘의 요일 추출 (0: 월요일, 1: 화요일, ..., 6: 일요일)
     today = datetime.datetime.today().weekday()
@@ -86,12 +81,12 @@ def can_enter_public_office(car_number):
 def main(image_paths, csv_output_path):
     results = []
     for image_path in image_paths:
-        car_number = extract_license_plate_number(image_path)
-        if car_number:
-            vehicle_type = classify_vehicle(car_number)
-            result = can_enter_public_office(car_number)
+        plate_chars = extract_license_plate_last_char(image_path)
+        if plate_chars:
+            vehicle_type = classify_vehicle(plate_chars)
+            result = can_enter_public_office(plate_chars)
             results.append({
-                "차량 번호": car_number,
+                "차량 번호": plate_chars,
                 "차량 유형": vehicle_type,
                 "출입 가능 여부": result,
                 "날짜": datetime.datetime.today().strftime('%Y-%m-%d')  # 날짜 형식 지정
@@ -110,3 +105,6 @@ def main(image_paths, csv_output_path):
     df = pd.DataFrame(results)
     df.to_csv(csv_output_path, index=False, encoding='utf-8-sig')  # UTF-8 BOM 인코딩 사용
     print(f"결과가 {csv_output_path}에 저장되었습니다.")
+
+# 예시로 이미지 경로를 입력하여 함수 호출
+
