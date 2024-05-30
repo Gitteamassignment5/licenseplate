@@ -72,7 +72,7 @@ def can_enter_public_office(plate_chars):
     
     if today < 5:  # 월요일(0)부터 금요일(4)까지 확인
         if last_digit in restriction_map[today]:
-            return "출입 불가"
+            return "출입 불가능"
         else:
             return "출입 가능"
     else:
