@@ -6,7 +6,9 @@ import IPython.display as ipd
 import subprocess
 import pandas as pd
 import datetime
+import subprocess
 import os
+from playsound import playsound
 
 # 각 모듈 임포트 (실제 모듈 이름으로 대체해야 함)
 import image_opencv_postprocessing_v2 as A  # YOLO 전처리 모듈
@@ -101,3 +103,15 @@ if __name__ == "__main__":
     print(f"CSV 파일 경로: {csv_output_path}")
 
     VC.main(image_paths, csv_output_path)
+
+    # CSV 파일 읽기 및 출입 가능 여부에 따라 음성 파일 재생
+    df = pd.read_csv(csv_output_path, encoding='utf-8-sig')
+    last_entry = df.iloc[-1]
+    access_status = last_entry['출입 가능 여부']
+
+    if access_status == "출입 가능":
+        subprocess.run(['start', r'D:\license\TTS_Taco\output\3.wav'], shell=True)
+    elif access_status == "출입 불가능":
+        subprocess.run(['start', r'D:\license\TTS_Taco\output\4.wav'], shell=True)
+    else:
+        print("출입 가능 여부를 확인할 수 없습니다.")
